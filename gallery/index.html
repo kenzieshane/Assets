@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <h1>Lo and Behold! The GD Assets Gallery!!!</h1>
+    <h1>The GD Assets Gallery by <a href="https://kenzieshane.my.id" target="_blank">KenzieShane</a></h1>
     <p id="status">Loading assets...</p>
   </header>
   <main>
@@ -44,6 +44,20 @@
       </div>
     </div>
   </div>
+  <!-- First-run setup modal (hidden by default) -->
+  <div id="setup-modal" class="setup-modal" style="display:none">
+    <div class="setup-box">
+      <h2>Welcome to GD Assets</h2>
+      <p>Select a category to start in, or choose "All Images" to browse everything. You can change this later in the controls.</p>
+      <div id="setup-category-grid" class="category-grid"></div>
+      <div class="setup-actions">
+        <button id="setup-start" class="btn-light-modern btn-primary-modern">Start with selected</button>
+        <button id="setup-all" class="btn-light-modern">See all images</button>
+        <button id="setup-skip" class="btn-light-modern">Don't show again</button>
+      </div>
+    </div>
+  </div>
+
   <footer id="legal">
     <p>All assets and intellectual property belong to RobtopGames. This is an archival resource for organizational purposes only.</p>
   </footer>

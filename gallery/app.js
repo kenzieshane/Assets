@@ -16,6 +16,7 @@ let allImages = [];
 let currentImages = [];
 let lightboxIndex = 0;
 let categories = new Set();
+let repImageMap = {};
 
 function isImage(name) {
   return /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name);
@@ -150,12 +151,88 @@ fetch('../assets.json')
     allImages.forEach(img => {
       img.category = getCategory(img.path);
       categories.add(img.category);
+      if (!repImageMap[img.category]) repImageMap[img.category] = img.path;
     });
     populateCategories();
     statusP.textContent = `Loaded ${allImages.length} images`;
-    refresh();
+    // If user has a saved default category, apply it
+    const savedDefault = localStorage.getItem('gd_gallery_default_category');
+    const seenSetup = localStorage.getItem('gd_gallery_seen_setup');
+    if (savedDefault) {
+      categorySelect.value = savedDefault;
+    }
+    // Show setup modal if not seen before
+    if (!seenSetup) {
+      showSetupModal();
+    } else {
+      refresh();
+    }
   })
   .catch(err => {
     statusP.textContent = 'Error: Could not load assets.json';
     console.error(err);
   });
+
+// Setup modal behavior
+function showSetupModal() {
+  const modal = document.getElementById('setup-modal');
+  const gridEl = document.getElementById('setup-category-grid');
+  modal.style.display = 'flex';
+  gridEl.innerHTML = '';
+  const cats = Array.from(categories).sort();
+  cats.forEach(cat => {
+    const t = document.createElement('div');
+    t.className = 'category-tile';
+    t.dataset.cat = cat;
+    // thumbnail
+    const thumb = document.createElement('img');
+    thumb.className = 'cat-thumb';
+    const rep = repImageMap[cat];
+    if (rep) thumb.src = '../' + rep;
+    else thumb.style.background = '#f1f5f9';
+    t.appendChild(thumb);
+    const name = document.createElement('div');
+    name.className = 'cat-name';
+    name.textContent = cat;
+    t.appendChild(name);
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.category-tile').forEach(el => el.classList.remove('selected'));
+      t.classList.add('selected');
+    });
+    gridEl.appendChild(t);
+  });
+
+  document.getElementById('setup-start').onclick = () => {
+    const sel = document.querySelector('.category-tile.selected');
+    const chosen = sel ? sel.dataset.cat : '';
+    if (chosen) {
+      localStorage.setItem('gd_gallery_default_category', chosen);
+      categorySelect.value = chosen;
+    } else {
+      localStorage.removeItem('gd_gallery_default_category');
+      categorySelect.value = '';
+    }
+    localStorage.setItem('gd_gallery_seen_setup', 'true');
+    hideSetupModal();
+    refresh();
+  };
+
+  document.getElementById('setup-all').onclick = () => {
+    localStorage.setItem('gd_gallery_seen_setup', 'true');
+    localStorage.removeItem('gd_gallery_default_category');
+    categorySelect.value = '';
+    hideSetupModal();
+    refresh();
+  };
+
+  document.getElementById('setup-skip').onclick = () => {
+    localStorage.setItem('gd_gallery_seen_setup', 'true');
+    hideSetupModal();
+    refresh();
+  };
+}
+
+function hideSetupModal() {
+  const modal = document.getElementById('setup-modal');
+  if (modal) modal.style.display = 'none';
+}
