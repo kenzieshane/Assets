@@ -1,9 +1,10 @@
 * { box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @keyframes slideCheckered {
   0% { background-position: 0 0; }
   100% { background-position: 40px 40px; }
 }
-body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; margin: 0; padding: 20px; background-color: #667eea; background-image: 
+body { font-family: 'Poppins', -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; margin: 0; padding: 20px; background-color: #667eea; background-image: 
   linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
   linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
   linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
@@ -17,6 +18,8 @@ header p { margin: 0; color: #666; font-size: 14px; }
 #filter:focus { outline: none; border-color: #667eea; }
 #sort { padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white; cursor: pointer; transition: border-color 0.2s; }
 #sort:focus { outline: none; border-color: #667eea; }
+#category { padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white; cursor: pointer; transition: border-color 0.2s; }
+#category:focus { outline: none; border-color: #667eea; }
 #count { font-size: 13px; color: #666; font-weight: 500; padding: 8px 12px; background: #f5f5f5; border-radius: 4px; }
 #controls { background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 #status { color: #999; font-size: 13px; }
@@ -38,3 +41,27 @@ main { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8
 .lightbox-nav button:hover { background: #667eea; color: white; border-color: #667eea; }
 #legal { padding: 16px; margin-top: 20px; background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.85); font-size: 12px; text-align: center; border-radius: 8px; line-height: 1.5; }
 #legal p { margin: 0; }
+@media (max-width: 1024px) {
+  #grid { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); }
+  body { padding: 16px; }
+}
+@media (max-width: 768px) {
+  #grid { grid-template-columns: repeat(auto-fill,minmax(140px,1fr)); gap: 12px; }
+  .card img { height: 140px; }
+  .control-row { flex-direction: column; align-items: stretch; }
+  #filter, #sort, #category { width: 100%; }
+  #count { width: 100%; text-align: center; }
+  body { padding: 12px; }
+  header { padding: 16px; }
+  main { padding: 16px; }
+}
+@media (max-width: 480px) {
+  #grid { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); gap: 8px; }
+  .card img { height: 100px; }
+  .caption { padding: 6px; font-size: 11px; }
+  body { padding: 8px; }
+  header { padding: 12px; }
+  header h1 { font-size: 20px; }
+  main { padding: 12px; }
+  #controls { padding: 12px; }
+}
