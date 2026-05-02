@@ -11,12 +11,25 @@ const lightboxSize = document.getElementById('lightbox-size');
 const lightboxClose = document.querySelector('.lightbox-close');
 const lightboxPrev = document.getElementById('lightbox-prev');
 const lightboxNext = document.getElementById('lightbox-next');
+const themeBtn = document.getElementById('theme-toggle');
+const mainEl = document.querySelector('main');
 
 let allImages = [];
 let currentImages = [];
 let lightboxIndex = 0;
 let categories = new Set();
 let repImageMap = {};
+let currentTheme = 'light';
+let currentPage = 1;
+const ITEMS_PER_PAGE = 40;
+let searchTimeout;
+
+function debounce(fn, delay) {
+  return function(...args) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => fn(...args), delay);
+  };
+}
 
 function isImage(name) {
   return /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name);
@@ -60,10 +73,11 @@ function sort(items, method) {
   }
 }
 
-function openLightbox(index) {
-  if (index < 0 || index >= currentImages.length) return;
+function openLightbox(index, items) {
+  if (index < 0 || index >= items.length) return;
   lightboxIndex = index;
-  const img = currentImages[index];
+  currentImages = items;
+  const img = items[index];
   lightboxImg.src = '../' + img.path;
   lightboxName.textContent = img.path;
   lightboxSize.textContent = formatSize(img.size);
@@ -72,11 +86,18 @@ function openLightbox(index) {
 
 function render(items) {
   grid.innerHTML = '';
-  currentImages = items;
-  countSpan.textContent = items.length + ' image' + (items.length !== 1 ? 's' : '');
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  const pageItems = items.slice(start, end);
   
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
+  countSpan.textContent = items.length + ' image' + (items.length !== 1 ? 's' : '') + ' (' + currentPage + '/' + totalPages + ')';
+  document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('prev-page').disabled = currentPage === 1;
+  document.getElementById('next-page').disabled = currentPage === totalPages;
+  
+  for (let i = 0; i < pageItems.length; i++) {
+    const it = pageItems[i];
     const card = document.createElement('div');
     card.className = 'card';
     card.style.cursor = 'pointer';
@@ -84,6 +105,7 @@ function render(items) {
     const img = document.createElement('img');
     img.src = '../' + it.path;
     img.alt = it.name;
+    img.loading = 'lazy';
     card.appendChild(img);
     
     const caption = document.createElement('div');
@@ -91,7 +113,8 @@ function render(items) {
     caption.textContent = it.path;
     card.appendChild(caption);
     
-    card.addEventListener('click', () => openLightbox(i));
+    const globalIdx = start + i;
+    card.addEventListener('click', () => openLightbox(globalIdx, items));
     grid.appendChild(card);
   }
 }
@@ -123,7 +146,21 @@ function populateCategories() {
 function refresh() {
   let filtered = applyFilter(allImages);
   filtered = sort(filtered, sortSelect.value);
+  currentPage = 1;
   render(filtered);
+}
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  mainEl.classList.remove('theme-light', 'theme-dark');
+  mainEl.classList.add('theme-' + theme);
+  themeBtn.textContent = theme === 'light' ? '☀' : '☾';
+  localStorage.setItem('gd_gallery_theme', theme);
+}
+
+function toggleTheme() {
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  applyTheme(newTheme);
 }
 
 lightboxClose.addEventListener('click', () => { lightbox.style.display = 'none'; });
@@ -140,9 +177,36 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight') openLightbox(lightboxIndex + 1);
 });
 
-filterInput.addEventListener('input', refresh);
+filterInput.addEventListener('input', debounce(refresh, 300));
 categorySelect.addEventListener('change', refresh);
 sortSelect.addEventListener('change', refresh);
+themeBtn.addEventListener('click', toggleTheme);
+
+// Pagination handlers
+document.getElementById('prev-page').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    let filtered = applyFilter(allImages);
+    filtered = sort(filtered, sortSelect.value);
+    render(filtered);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+document.getElementById('next-page').addEventListener('click', () => {
+  let filtered = applyFilter(allImages);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  if (currentPage < totalPages) {
+    currentPage++;
+    filtered = sort(filtered, sortSelect.value);
+    render(filtered);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+// Load theme preference
+const savedTheme = localStorage.getItem('gd_gallery_theme') || 'light';
+applyTheme(savedTheme);
 
 fetch('../assets.json')
   .then(r => r.json())
