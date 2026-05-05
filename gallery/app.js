@@ -11,7 +11,6 @@ const lightboxSize = document.getElementById('lightbox-size');
 const lightboxClose = document.querySelector('.lightbox-close');
 const lightboxPrev = document.getElementById('lightbox-prev');
 const lightboxNext = document.getElementById('lightbox-next');
-const themeBtn = document.getElementById('theme-toggle');
 const mainEl = document.querySelector('main');
 
 let allImages = [];
@@ -19,7 +18,6 @@ let currentImages = [];
 let lightboxIndex = 0;
 let categories = new Set();
 let repImageMap = {};
-let currentTheme = 'light';
 let currentPage = 1;
 const ITEMS_PER_PAGE = 40;
 let searchTimeout;
@@ -101,13 +99,13 @@ function render(items) {
     const card = document.createElement('div');
     card.className = 'card';
     card.style.cursor = 'pointer';
-    
+
     const img = document.createElement('img');
     img.src = '../' + it.path;
     img.alt = it.name;
     img.loading = 'lazy';
     card.appendChild(img);
-    
+
     const caption = document.createElement('div');
     caption.className = 'caption';
     caption.textContent = it.path;
@@ -150,25 +148,20 @@ function refresh() {
   render(filtered);
 }
 
-function applyTheme(theme) {
-  currentTheme = theme;
-  mainEl.classList.remove('theme-light', 'theme-dark');
-  mainEl.classList.add('theme-' + theme);
-  themeBtn.textContent = theme === 'light' ? '☀' : '☾';
-  localStorage.setItem('gd_gallery_theme', theme);
+if (lightboxClose) {
+  lightboxClose.addEventListener('click', () => { lightbox.style.display = 'none'; });
 }
-
-function toggleTheme() {
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  applyTheme(newTheme);
+if (lightbox) {
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) lightbox.style.display = 'none';
+  });
 }
-
-lightboxClose.addEventListener('click', () => { lightbox.style.display = 'none'; });
-lightbox.addEventListener('click', (e) => {
-  if (e.target === lightbox) lightbox.style.display = 'none';
-});
-lightboxPrev.addEventListener('click', () => openLightbox(lightboxIndex - 1));
-lightboxNext.addEventListener('click', () => openLightbox(lightboxIndex + 1));
+if (lightboxPrev) {
+  lightboxPrev.addEventListener('click', () => openLightbox(lightboxIndex - 1));
+}
+if (lightboxNext) {
+  lightboxNext.addEventListener('click', () => openLightbox(lightboxIndex + 1));
+}
 
 document.addEventListener('keydown', (e) => {
   if (lightbox.style.display === 'none') return;
@@ -180,33 +173,52 @@ document.addEventListener('keydown', (e) => {
 filterInput.addEventListener('input', debounce(refresh, 300));
 categorySelect.addEventListener('change', refresh);
 sortSelect.addEventListener('change', refresh);
-themeBtn.addEventListener('click', toggleTheme);
+
+// Clear gallery settings button
+const clearBtn = document.getElementById('clear-settings');
+if (clearBtn) {
+  clearBtn.addEventListener('click', () => {
+    // Keys used by the gallery
+    const keys = ['gd_gallery_theme', 'gd_gallery_seen_setup', 'gd_gallery_default_category'];
+    keys.forEach(k => localStorage.removeItem(k));
+    // Also refresh UI state
+    categorySelect.value = '';
+    localStorage.removeItem('gd_gallery_default_category');
+    alert('Gallery settings cleared. Reloading page.');
+    window.location.reload();
+  });
+}
 
 // Pagination handlers
-document.getElementById('prev-page').addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
+const prevPageBtn = document.getElementById('prev-page');
+if (prevPageBtn) {
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      let filtered = applyFilter(allImages);
+      filtered = sort(filtered, sortSelect.value);
+      render(filtered);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+const nextPageBtn = document.getElementById('next-page');
+if (nextPageBtn) {
+  nextPageBtn.addEventListener('click', () => {
     let filtered = applyFilter(allImages);
-    filtered = sort(filtered, sortSelect.value);
-    render(filtered);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-});
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    if (currentPage < totalPages) {
+      currentPage++;
+      filtered = sort(filtered, sortSelect.value);
+      render(filtered);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
 
-document.getElementById('next-page').addEventListener('click', () => {
-  let filtered = applyFilter(allImages);
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  if (currentPage < totalPages) {
-    currentPage++;
-    filtered = sort(filtered, sortSelect.value);
-    render(filtered);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-});
-
-// Load theme preference
-const savedTheme = localStorage.getItem('gd_gallery_theme') || 'light';
-applyTheme(savedTheme);
+// Theme support removed; clear any legacy theme reference
+// (gd_gallery_theme key is still cleared by the Clear button)
 
 fetch('../assets.json')
   .then(r => r.json())
