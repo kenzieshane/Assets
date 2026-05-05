@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://extensions.kenzieshane.my.id/Assets/sitemap.xml
